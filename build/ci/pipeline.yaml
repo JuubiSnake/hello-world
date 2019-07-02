@@ -92,7 +92,7 @@ jobs:
             export LATEST_GOOD_VERSION=$(cat ./hello-world-master/.git/short_ref)
             curl -L https://github.com/concourse/concourse/releases/download/v5.3.0/fly-5.3.0-linux-amd64.tgz | tar xz            
             chmod +x ./fly
-            ./fly -t local login -c http://youthful-duck-web.default.svc.cluster.local:8080 -n main -u ((concourse-username)) -p ((concourse-password))
+            ./fly -t local login -c http://nasal-eel-web.default.svc.cluster.local:8080 -n main -u ((concourse-username)) -p ((concourse-password))
             ./fly -t local sync
             sed 's/^- name: deploy-version-.*/- name: deploy-version-'"$LATEST_GOOD_VERSION"'/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
             ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -v aws-access-key-id=((aws-access-key-id)) -v aws-secret-access-key=((aws-secret-access-key)) -n
