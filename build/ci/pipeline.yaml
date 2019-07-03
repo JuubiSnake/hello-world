@@ -94,7 +94,7 @@ jobs:
             chmod +x ./fly
             ./fly -t local login -c http://nasal-eel-web.default.svc.cluster.local:8080 -n main -u ((concourse-username)) -p ((concourse-password))
             ./fly -t local sync
-            sed 's/^- name: deploy-version-.*-/- name: deploy-version-'"$LATEST_GOOD_VERSION"'-/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
+            sed 's/^- name: deploy-version-.*-to-/- name: deploy-version-'"$LATEST_GOOD_VERSION"'-to-/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
             ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -n
 
 # this job is concerned with deploying a version of the hello-world app onto
@@ -113,8 +113,8 @@ jobs:
   - put: hello-world-quay-registry
     params:
       build: ./hello-world-master
-      tag: ./git_info/tag
-      labels_file: ./git_info/info.json      
+      tag: ./git-info/tag
+      labels_file: ./git-info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
 
 - name: deploy-version-PLACEHOLDER-to-production
@@ -130,8 +130,8 @@ jobs:
   - put: hello-world-quay-registry
     params:
       build: ./hello-world-master
-      tag: ./git_info/tag
-      labels_file: ./git_info/info.json      
+      tag: ./git-info/tag
+      labels_file: ./git-info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
 
 

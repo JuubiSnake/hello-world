@@ -15,5 +15,5 @@ run:
   - -exc
   - |
     export COMMIT=$(cat ./hello-world-master/.git/short_ref)
-    echo '{"commit": '"$COMMIT"'}' >> ./git-info/info.json
+    echo '{"commit": "'"$COMMIT"'"}' >> ./git-info/info.json
     echo $TAG >> ./git-info/tag
