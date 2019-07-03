@@ -1,18 +1,18 @@
+---
 platform: linux
-
-inputs:
-- name: hello-world-master
-outputs:
-- name: git-info
 
 image_resource:
   type: docker-image
   source:
     repository: alpine
+inputs:
+  - name: hello-world-master
+outputs:
+  - name: git-info
 run:
   path: /bin/ash
-  args: 
-    - -exc
-    - |
-      export COMMIT=$(cat ./hello-world-master/.git/short_ref)
-      echo '{"commit": "$COMMIT"}' >> ./git-info/info.json
+  args:
+  - -exc
+  - |
+    export COMMIT=$(cat ./hello-world-master/.git/short_ref)
+    echo '{"commit": '"$COMMIT"'}' >> ./git-info/info.json
