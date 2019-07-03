@@ -107,7 +107,7 @@ jobs:
       - release-master
     trigger: false
   - task: get-git-info
-    file: ./hello-world-master/build/ci/tasks/git-info-task.yaml
+    file: hello-world-master/build/ci/tasks/git-info-task.yaml
   - put: hello-world-quay-registry
     params:
       build: ./hello-world-master
