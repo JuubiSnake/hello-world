@@ -108,10 +108,12 @@ jobs:
     trigger: false
   - task: get-git-info
     file: hello-world-master/build/ci/tasks/git-info-task.yaml
+    params:
+      TAG: stage
   - put: hello-world-quay-registry
     params:
       build: ./hello-world-master
-      tag: stage
+      tag: ./git_info/tag
       labels_file: ./git_info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
 
@@ -123,10 +125,12 @@ jobs:
     trigger: false
   - task: get-git-info
     file: hello-world-master/build/ci/tasks/git-info-task.yaml
+    params:
+      TAG: production
   - put: hello-world-quay-registry
     params:
       build: ./hello-world-master
-      tag: production
+      tag: ./git_info/tag
       labels_file: ./git_info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
 
