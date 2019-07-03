@@ -94,62 +94,41 @@ jobs:
             chmod +x ./fly
             ./fly -t local login -c http://nasal-eel-web.default.svc.cluster.local:8080 -n main -u ((concourse-username)) -p ((concourse-password))
             ./fly -t local sync
-            sed 's/^- name: deploy-version-.*/- name: deploy-version-'"$LATEST_GOOD_VERSION"'/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
-            ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -v aws-access-key-id=((aws-access-key-id)) -v aws-secret-access-key=((aws-secret-access-key)) -n
+            sed 's/^- name: deploy-version-.*-/- name: deploy-version-'"$LATEST_GOOD_VERSION"'-/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
+            ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -n
 
 # this job is concerned with deploying a version of the hello-world app onto
 # kubernetes and is triggered manually
 # the name of this job is replaced by the SED command shown in the previous task
-- name: deploy-version-8b206b0
+- name: deploy-version-PLACEHOLDER-to-stage
   plan:
   - get: hello-world-master
     passed:
       - release-master
     trigger: false
-  - task: render-kubernetes-templates
-    config:
-      inputs:
-      - name: hello-world-master
-      outputs:
-      - name: kubernetes-descriptors
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: golang
-          tag: alpine
-      run:
-        path: sh
-        args:
-        - -exc
-        - |
-          apk add --no-cache git
-          cd hello-world-master
-          go run ./cmd/kubernetes-builder/main.go --tag $(cat ./.git/short_ref)
-          cp -a ./build/package/kubernetes/. ../kubernetes-descriptors
-  - task: apply-kubernetes-configs
-    config:
-      inputs:
-      - name: kubernetes-descriptors
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: alpine
-      run:
-        path: sh
-        args:
-        - -exc
-        - |
-          apk add --no-cache python py-pip curl
-          pip install awscli
-          curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-          chmod +x ./kubectl
-          export AWS_ACCESS_KEY_ID=((aws-access-key-id))
-          export AWS_SECRET_ACCESS_KEY=((aws-secret-access-key))
-          aws eks update-kubeconfig --name testing-concourse --region eu-central-1
-          ./kubectl apply -f kubernetes-descriptors/deployment.yaml
-          ./kubectl apply -f kubernetes-descriptors/service.yaml
+  - task: get-git-info
+    file: ./hello-world-master/build/ci/tasks/git-info-task.yaml
+  - put: hello-world-quay-registry
+    params:
+      build: ./hello-world-master
+      tag: stage
+      labels_file: ./git_info/info.json      
+      dockerfile: ./hello-world-master/build/package/docker/Dockerfile
+
+- name: deploy-version-PLACEHOLDER-to-production
+  plan:
+  - get: hello-world-master
+    passed:
+      - release-master
+    trigger: false
+  - task: get-git-info
+    file: ./hello-world-master/build/ci/tasks/git-info-task.yaml
+  - put: hello-world-quay-registry
+    params:
+      build: ./hello-world-master
+      tag: production
+      labels_file: ./git_info/info.json      
+      dockerfile: ./hello-world-master/build/package/docker/Dockerfile
 
 
 
