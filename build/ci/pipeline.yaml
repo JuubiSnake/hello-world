@@ -4,7 +4,7 @@ resources:
   type: git
   source:
     uri: https://github.com/JuubiSnake/hello-world
-    branch: master
+    branch: helm
 
 - name: hello-world-quay-registry
   type: docker-image
@@ -12,6 +12,24 @@ resources:
     username: ((quay-username))
     password: ((quay-password))
     repository: quay.io/mweller/hello-world
+
+- name: s3-helm-values-stage
+  type: s3
+  source:
+    bucket: fc-mweller-hello-world-helm
+    regexp: stage/values-(.*).yaml
+    access_key_id: ((access-key-id))
+    secret_access_key: ((secret-access-key))
+    region_name: eu-west-1
+
+- name: s3-helm-values-prod
+  type: s3
+  source:
+    bucket: fc-mweller-hello-world-helm
+    regexp: prod/values-(.*).yaml
+    access_key_id: ((access-key-id))
+    secret_access_key: ((secret-access-key))
+    region_name: eu-west-1
 
 
 # Jobs are expressions of what we'd like to achieve in a global scope...
@@ -95,7 +113,7 @@ jobs:
             ./fly -t local login -c http://nasal-eel-web.default.svc.cluster.local:8080 -n main -u ((concourse-username)) -p ((concourse-password))
             ./fly -t local sync
             sed 's/^- name: deploy-version-.*-to-/- name: deploy-version-'"$LATEST_GOOD_VERSION"'-to-/' ./hello-world-master/build/ci/pipeline.yaml > ./updated-pipeline.yml
-            ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -n
+            ./fly -t local set-pipeline -p hello-world -c ./updated-pipeline.yml -v quay-username=((quay-username)) -v quay-password=((quay-password)) -v concourse-username=((concourse-username)) -v concourse-password=((concourse-password)) -v access-key-id=((access-key-id)) -v secret-access-key=((secret-access-key)) -n
 
 # this job is concerned with deploying a version of the hello-world app onto
 # kubernetes and is triggered manually
@@ -116,6 +134,15 @@ jobs:
       tag: ./git-info/tag
       labels_file: ./git-info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
+  - task: push-helm-value-stage
+    file: hello-world-master/build/ci/tasks/helm-task.yaml
+    params:
+      TAG: stage
+      IMAGE: quay.io/mweller/hello-world
+  - put: s3-helm-values-stage
+    params:
+      file: ./helm/values-*.yaml
+      acl: public-read
 
 - name: deploy-version-PLACEHOLDER-to-production
   plan:
@@ -133,6 +160,15 @@ jobs:
       tag: ./git-info/tag
       labels_file: ./git-info/info.json      
       dockerfile: ./hello-world-master/build/package/docker/Dockerfile
+  - task: publish-helm-vaues-prod
+    file: hello-world-master/build/ci/tasks/helm-task.yaml
+    params:
+      TAG: production
+      IMAGE: quay.io/mweller/hello-world
+  - put: s3-helm-values-prod
+    params:
+      file: ./helm/values-*.yaml
+      acl: public-read
 
 
 

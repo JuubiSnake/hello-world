@@ -1,0 +1,21 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+    tag: alpine
+inputs:
+  - name: hello-world-master
+outputs:
+  - name: helm
+run:
+  path: /bin/ash
+  args:
+  - -exc
+  - |
+    apk add --no-cache git
+    export COMMIT=$(cat ./hello-world-master/.git/short_ref)
+    cd ./hello-world-master
+    go run ./cmd/helm-values-renderer --image $IMAGE --tag $TAG --commit $COMMIT
+    cp ./build/package/helm/values-$COMMIT.yaml ../helm
